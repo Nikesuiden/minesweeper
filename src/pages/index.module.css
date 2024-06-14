@@ -8,8 +8,63 @@
   padding: 0 0.5rem;
 }
 
-.sampleStyle {
+.boardstyle {
+  display: flex;
+  flex-wrap: wrap;
+  width: 360px;
+  height: 360px;
+  background: rgb(162 162 162);
+}
+
+.cellstyle {
+  position: relative;
+  width: 40px;
+  height: 40px;
+  border: 1px solid black;
+}
+
+.stoneStyle {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 56px;
+  height: 56px;
+  margin-right: -50%;
+  background-color: white;
+  border: 1px solid black;
+  border-radius: 100%;
+  transform: translate(-50%, -50%);
+}
+
+.topContainer {
+  display: flex;
+  justify-content: center;
+  width: 360px;
+  padding: 15px;
+  background-color: gray;
+}
+
+.resetBotton {
   width: 30px;
   height: 30px;
+  margin-top: 5px;
+  margin-right: 30px;
+  margin-left: 30px;
   background: url('../assets/images/icons.png') no-repeat;
+}
+
+.flagCounter {
+  width: 80px;
+  height: 40px;
+  background-color: black;
+}
+
+.timeCounter {
+  width: 80px;
+  height: 40px;
+  background-color: black;
+}
+
+.selectMode {
+  
 }
