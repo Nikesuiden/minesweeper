@@ -8,6 +8,10 @@
   padding: 0 0.5rem;
 }
 
+.gameContainer {
+  border: 2px solid black;
+}
+
 .boardstyle {
   display: flex;
   flex-wrap: wrap;
@@ -23,16 +27,25 @@
   border: 1px solid black;
 }
 
-.stoneStyle {
+.bombStyle {
   position: absolute;
   top: 50%;
   left: 50%;
-  width: 56px;
-  height: 56px;
+  width: 30px;
+  height: 30px;
   margin-right: -50%;
-  background-color: white;
-  border: 1px solid black;
-  border-radius: 100%;
+  background: url('../assets/images/icons.png') no-repeat;
+  transform: translate(-50%, -50%);
+}
+
+.countStyle {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 30px;
+  height: 30px;
+  margin-right: -50%;
+  background: url('../assets/images/icons.png') no-repeat;
   transform: translate(-50%, -50%);
 }
 
@@ -66,5 +79,4 @@
 }
 
 .selectMode {
-  
 }
