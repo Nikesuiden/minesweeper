@@ -2,11 +2,11 @@ import { useState } from 'react';
 import styles from './index.module.css';
 
 const Home = () => {
-  const [faceBotton, setFaceBotton] = useState(0); /* ゲーム状況を可視化 */
-  const [userInput, setUserInput] = useState(0); /* ユーザのクリックしたとこ掘る */
-  const [cellState, setCellState] = useState(0); /* セルのデザインを変化 */
+  const [faceBotton, setFaceBotton] = useState(0); // ゲーム状況を可視化
+  const [userInput, setUserInput] = useState(0); // ユーザのクリックしたとこ掘る
+  const [cellState, setCellState] = useState(0); // セルのデザインを変化
   const [clickState, setClickState] = useState([
-    /* 0:空、1:クリック済み、2:🚩 */
+    // 0:空、1:クリック済み、2:🚩
     [0, 0, 0, 0, 0, 0, 0, 0, 0],
     [0, 0, 0, 0, 0, 0, 0, 0, 0],
     [0, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -19,7 +19,7 @@ const Home = () => {
   ]);
 
   const [bombMap, setBombMap] = useState([
-    /* 0がボムなし、1がボムあり、以降周辺のボム数2~9:1~8 */
+    // 0がボムなし、1がボムあり、以降周辺のボム数2~9:1~8
     [0, 0, 0, 0, 0, 0, 0, 0, 0],
     [0, 0, 0, 0, 0, 0, 0, 0, 0],
     [0, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -42,18 +42,10 @@ const Home = () => {
     [-1, 1],
   ];
 
-  function getRandomValue(value1: number, value2: number, probability: number): number {
-    // 0 から 1 の間のランダムな数を生成
-    const random = Math.random();
+  // ここで爆弾を配置する関数を定義する必要はなくなるので削除
 
-    // 確率に基づいて value1 か value2 を返す
-    return random < probability ? value1 : value2;
-  }
-
-  /* 列数の定義 */
+  // 列数の定義
   const rowLength = bombMap[0];
-
-
 
   const clickHandler = (x: number, y: number) => {
     console.log(`クリックした座標 [x, y] => [${x}, ${y}]`);
@@ -66,42 +58,80 @@ const Home = () => {
     // フラット化された関数から "1" の値をカウントする
     const countOfValue = oneDimArray.filter((item) => item === 1).length;
 
-    /* もしファーストクリックだったら */
+    // もしファーストクリックだったら
     if (countOfValue === 0) {
       newBompMap[x][y] = 0;
 
-    /* マップ上全展開、残りのセルに爆弾を設置 */
-    for (let n = 0; n < bombMap.length; n++) {
-      for (let m = 0; m < rowLength.length; m++) {
-        newBompMap[n][m] = getRandomValue(0, 1, 0.9);
+      // マップ上全展開、残りのセルに爆弾を設置
+      let onesPlaced = 0;
+      const totalOnes = 10; // 配置する1の数
+      const totalCells = bombMap.length * rowLength.length;
+
+      // 全セルを一時的にフラットなリストとして扱う
+      const flatMap = [];
+
+      // まず全てのセルをランダムに 0 または 1 とする
+      for (let i = 0; i < totalCells; i++) {
+        if (onesPlaced < totalOnes) {
+          flatMap.push(1);
+          onesPlaced++;
+        } else {
+          flatMap.push(0);
         }
+      }
+
+
+      // マップ内の１の数が totalOnes と一致するまで繰り返す
+      while (true) {
+
+      // フラットなリストをシャッフルする
+      for (let i = flatMap.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [flatMap[i], flatMap[j]] = [flatMap[j], flatMap[i]];
+      }
+
+      // シャッフルされたリストを新しい bombMap に適用
+      let index = 0;
+      for (let n = 0; n < bombMap.length; n++) {
+        for (let m = 0; m < rowLength.length; m++) {
+          newBompMap[n][m] = flatMap[index++];
+        }
+      }
+      newBompMap[x][y] = 0;
+
+      const newBombArray: number[] = newBompMap.flat(1);
+      const countNewOne = newBombArray.filter((item) => item === 1).length;
+
+      if (countNewOne === totalOnes) {
+        console.log(`ボムの数${countNewOne}`)
+        break;
+      }
+
     }
 
-    /* セルが空白の場合、周辺のボム数を計測 */
-    for (let n = 0; n < bombMap.length; n++) {
-      for (let m = 0; m < rowLength.length; m++) {
-        if (newBompMap[n][m] === 0) {
-          for (const dir of directions) {
-            if(newBompMap[n + dir[0]] !== undefined &&
-              newBompMap[n + dir[0]][m + dir[1]] !== undefined &&
-            newBompMap[n + dir[0]][m + dir[1]] === 1) {
-              bombCounter += 1;
-              console.log(bombCounter - 2);
-              }
 
+      // セルが空白の場合、周辺のボム数を計測
+      for (let n = 0; n < bombMap.length; n++) {
+        for (let m = 0; m < rowLength.length; m++) {
+          if (newBompMap[n][m] === 0) {
+            for (const dir of directions) {
+              if (
+                newBompMap[n + dir[0]] !== undefined &&
+                newBompMap[n + dir[0]][m + dir[1]] !== undefined &&
+                newBompMap[n + dir[0]][m + dir[1]] === 1
+              ) {
+                bombCounter += 1;
+                console.log(bombCounter - 2);
+              }
             }
             newBompMap[n][m] = bombCounter;
             bombCounter = 2;
           }
         }
-
-        }
+      }
     }
 
-
-
-
-    /* クリックしたところはクリック済みの"1"印を設置 */
+    // クリックしたところはクリック済みの "1" 印を設置
     newClickMap[x][y] = 1;
 
     // 二次元配列を一次元化する配列
@@ -126,34 +156,27 @@ const Home = () => {
             <div className={styles.timeCounter} />
           </div>
           <div className={styles.boardstyle}>
-            {bombMap.map(
-              (
-                row,
-                y, //map = for
-              ) =>
-                row.map(
-                  (
-                    bomb,
-                    x, //row
-                  ) => (
+            {bombMap.map((row, y) =>
+              row.map((bomb, x) => (
+                <div
+                  className={styles.cellstyle}
+                  key={`${x}-${y}`}
+                  onClick={() => clickHandler(x, y)}
+                >
+                  {bomb === 1 && (
                     <div
-                      className={styles.cellstyle}
-                      key={`${x}-${y}`}
-                      onClick={() => clickHandler(x, y)}
-                    >
-                      {bomb === 1 && (
-                        <div
-                          className={styles.bombStyle}
-                          style={{ backgroundPosition: bomb === 1 ? `-300px 0` : `100px 0` }}
-                        />
-                      )}
-                      {bomb >= 3 && (
-                        <div className={styles.countStyle}
-                        style={{backgroundPosition: `${-30 * (bomb - 3)}px 0`}}/>
-                      )}
-                    </div>
-                  ),
-                ),
+                      className={styles.bombStyle}
+                      style={{ backgroundPosition: bomb === 1 ? `-300px 0` : `100px 0` }}
+                    />
+                  )}
+                  {bomb >= 3 && (
+                    <div
+                      className={styles.countStyle}
+                      style={{ backgroundPosition: `${-30 * (bomb - 3)}px 0` }}
+                    />
+                  )}
+                </div>
+              ))
             )}
           </div>
         </div>
