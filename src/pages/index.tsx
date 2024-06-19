@@ -6,7 +6,8 @@ const Home = () => {
   const [userInput, setUserInput] = useState(0); /* ユーザのクリックしたとこ掘る */
   const [cellState, setCellState] = useState(0); /* セルのデザインを変化 */
   const [clickState, setClickState] = useState([
-    /* 0:空、1:クリック済み、2:🚩 */ [0, 0, 0, 0, 0, 0, 0, 0, 0],
+    /* 0:空、1:クリック済み、2:🚩 */
+    [0, 0, 0, 0, 0, 0, 0, 0, 0],
     [0, 0, 0, 0, 0, 0, 0, 0, 0],
     [0, 0, 0, 0, 0, 0, 0, 0, 0],
     [0, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -52,10 +53,13 @@ const Home = () => {
   /* 列数の定義 */
   const rowLength = bombMap[0];
 
+
+
   const clickHandler = (x: number, y: number) => {
     console.log(`クリックした座標 [x, y] => [${x}, ${y}]`);
     const newBompMap = structuredClone(bombMap);
     const newClickMap = structuredClone(clickState);
+    let bombCounter = 2; // デフォルト１だとボムに変化する可能性があるため
 
     // 二次元配列を一次元化する配列
     const oneDimArray: number[] = newClickMap.flat(1);
@@ -81,10 +85,13 @@ const Home = () => {
             if(newBompMap[n + dir[0]] !== undefined &&
               newBompMap[n + dir[0]][m + dir[1]] !== undefined &&
             newBompMap[n + dir[0]][m + dir[1]] === 1) {
-              break;
+              bombCounter += 1;
+              console.log(bombCounter - 2);
               }
 
             }
+            newBompMap[n][m] = bombCounter;
+            bombCounter = 2;
           }
         }
 
@@ -139,6 +146,10 @@ const Home = () => {
                           className={styles.bombStyle}
                           style={{ backgroundPosition: bomb === 1 ? `-300px 0` : `100px 0` }}
                         />
+                      )}
+                      {bomb >= 3 && (
+                        <div className={styles.countStyle}
+                        style={{backgroundPosition: `${-30 * (bomb - 3)}px 0`}}/>
                       )}
                     </div>
                   ),
