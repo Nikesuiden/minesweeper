@@ -5,10 +5,20 @@ const Home = () => {
   const [faceBotton, setFaceBotton] = useState(0); /* ゲーム状況を可視化 */
   const [userInput, setUserInput] = useState(0); /* ユーザのクリックしたとこ掘る */
   const [cellState, setCellState] = useState(0); /* セルのデザインを変化 */
-  const [clickCounter, setClickCounter] = useState(0); /* クリック回数可視化 */
-  const [bompCounter, setBombCounter] = useState(0);
+  const [clickState, setClickState] = useState([
+    /* 0:空、1:クリック済み、2:🚩 */ [0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0],
+  ]);
+
   const [bombMap, setBombMap] = useState([
-    /* 0がボムなし、1がボムあり */
+    /* 0がボムなし、1がボムあり、以降周辺のボム数2~9:1~8 */
     [0, 0, 0, 0, 0, 0, 0, 0, 0],
     [0, 0, 0, 0, 0, 0, 0, 0, 0],
     [0, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -42,74 +52,66 @@ const Home = () => {
   /* 列数の定義 */
   const rowLength = bombMap[0];
 
-  let click = 0;
-
   const clickHandler = (x: number, y: number) => {
     console.log(`クリックした座標 [x, y] => [${x}, ${y}]`);
     const newBompMap = structuredClone(bombMap);
-    const newCountMap = structuredClone(bombMap);
+    const newClickMap = structuredClone(clickState);
 
-    console.log(clickCounter);
+    // 二次元配列を一次元化する配列
+    const oneDimArray: number[] = newClickMap.flat(1);
+    // フラット化された関数から "1" の値をカウントする
+    const countOfValue = oneDimArray.filter((item) => item === 1).length;
 
-    click += 1;
-    setClickCounter(click)
+    /* もしファーストクリックだったら */
+    if (countOfValue === 0) {
+      newBompMap[x][y] = 0;
 
-    console.log(clickCounter);
-
-    // setClickCounter(click)
-    // console.log(clickCounter);
-
-    /* 最初のクリックの処理 */
-    if (clickCounter === 0) {
-
-      /* クリック後マップにボムを配置 [m, n] */
-      for (let n = 0; n < bombMap.length; n++) {
-        for (let m = 0; m < rowLength.length; m++) {
-
-          /* もし配置先がファーストクリックしたセルなら */
-          if (n === y && m === x) {
-            newBompMap[n][m] = 0;
-
-          } else {
-            newBompMap[n][m] = getRandomValue(0, 1, 0.9);
-          }
-          setBombMap(newBompMap);
+    /* マップ上全展開、残りのセルに爆弾を設置 */
+    for (let n = 0; n < bombMap.length; n++) {
+      for (let m = 0; m < rowLength.length; m++) {
+        newBompMap[n][m] = getRandomValue(0, 1, 0.9);
         }
-      }
     }
 
-/* クリック2回以降 */
-    else {
+    /* セルが空白の場合、周辺のボム数を計測 */
+    for (let n = 0; n < bombMap.length; n++) {
+      for (let m = 0; m < rowLength.length; m++) {
+        if (newBompMap[n][m] === 0) {
+          for (const dir of directions) {
+            if(newBompMap[n + dir[0]] !== undefined &&
+              newBompMap[n + dir[0]][m + dir[1]] !== undefined &&
+            newBompMap[n + dir[0]][m + dir[1]] === 1) {
+              break;
+              }
 
-/* 全セル参照 */
-    for (let n = 0; n < bombMap.length; n++)
-      { for (let m = 0; m < rowLength.length; m++)
+            }
+          }
+        }
 
-    {
-
-    /* 一つのセルのまわりを詮索 */
-    for (const dir of directions) {
-      /* 未定義の領域を省くためのフィルターにかける */
-      if (bombMap[n + dir[0]] !== undefined && bombMap[n + dir[0]][m + dir[1]] !== undefined) {
-
-      /* 各セルに周辺にあるボムの数をカウントする */
-      if (bombMap[n + dir[0]][m + dir[1]] === 1) {
-        newCountMap[n][m] += 1;
-
-      }
-
-      }
+        }
     }
-  }}
 
-    setBombCounter(newCountMap);
-  }
+
+
+
+    /* クリックしたところはクリック済みの"1"印を設置 */
+    newClickMap[x][y] = 1;
+
+    // 二次元配列を一次元化する配列
+    const oneDimArray2: number[] = newClickMap.flat(1);
+    // フラット化された関数から "1" の値をカウントする
+    const countOfValue2 = oneDimArray2.filter((item) => item === 1).length;
+
+    console.log(oneDimArray2);
+    console.log(countOfValue2);
+    setBombMap(newBompMap);
+    setClickState(newClickMap);
   };
-
 
   return (
     <div className={styles.container}>
       <div className={styles.selectMode}>
+        初級 中級 上級 カスタム
         <div className={styles.gameContainer}>
           <div className={styles.topContainer}>
             <div className={styles.flagCounter} />
@@ -124,24 +126,19 @@ const Home = () => {
               ) =>
                 row.map(
                   (
-                    bomp,
+                    bomb,
                     x, //row
                   ) => (
                     <div
                       className={styles.cellstyle}
                       key={`${x}-${y}`}
                       onClick={() => clickHandler(x, y)}
-                    > {cellState === 1 && (
-                      <div
-                        className={styles.bombStyle}
-                        style={{ backgroundPosition: bomp === 1 ? `-300px 0` : `100px 0` }}
-                      />
-                      )}
-
-                      {cellState === 0 && (
+                    >
+                      {bomb === 1 && (
                         <div
-                        className={styles.countStyle}
-                        style={{backgroundPosition: }}/>
+                          className={styles.bombStyle}
+                          style={{ backgroundPosition: bomb === 1 ? `-300px 0` : `100px 0` }}
+                        />
                       )}
                     </div>
                   ),
