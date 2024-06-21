@@ -1,12 +1,9 @@
-import { useState } from 'react';
+import { useEffect ,useState } from 'react';
 import styles from './index.module.css';
 
 const Home = () => {
-  const [faceBotton, setFaceBotton] = useState(0); // ゲーム状況を可視化
-  const [userInput, setUserInput] = useState(0); // ユーザのクリックしたとこ掘る
-  const [cellState, setCellState] = useState(0); // セルのデザインを変化
   const [clickState, setClickState] = useState([
-    // 0:空、1:クリック済み、2:🚩
+    // 0:空、1:クリック済み、2:🚩、岩などが0に当たる
     [0, 0, 0, 0, 0, 0, 0, 0, 0],
     [0, 0, 0, 0, 0, 0, 0, 0, 0],
     [0, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -17,6 +14,19 @@ const Home = () => {
     [0, 0, 0, 0, 0, 0, 0, 0, 0],
     [0, 0, 0, 0, 0, 0, 0, 0, 0],
   ]);
+
+  // 数字やボムを隠す岩カバー
+  const [coverState, setCoverState] = useState([
+    [0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0],
+  ])
 
   const [bombMap, setBombMap] = useState([
     // 0がボムなし、1がボムあり、以降周辺のボム数2~9:1~8
@@ -97,7 +107,11 @@ const Home = () => {
           newBompMap[n][m] = flatMap[index++];
         }
       }
-      newBompMap[x][y] = 0;
+
+      // クリックした場所はボムなしにする。
+      if (newBompMap[x][y] === 1) {
+        newBompMap[x][y] = 0;
+      }
 
       const newBombArray: number[] = newBompMap.flat(1);
       const countNewOne = newBombArray.filter((item) => item === 1).length;
