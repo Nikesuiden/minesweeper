@@ -27,6 +27,16 @@
   border: 1px solid black;
 }
 
+.coverstyle {
+  position: relative;
+  top: 50%;
+  left: 50%;
+  width: 30px;
+  height: 30px;
+  background-color: rgb(105 105 105);
+  transform: translate(-50%, -50%);
+}
+
 .bombStyle {
   position: absolute;
   top: 50%;
@@ -67,17 +77,29 @@
 }
 
 .flagCounter {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   width: 80px;
   height: 40px;
+  font-size: 30px;
+  color: red;
   background-color: black;
 }
 
 .timeCounter {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   width: 80px;
   height: 40px;
+  font-size: 30px;
+  color: red;
   background-color: black;
 }
 
 .selectMode {
-  
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
