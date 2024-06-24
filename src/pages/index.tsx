@@ -28,13 +28,14 @@ const Home = () => {
     [0, 0, 0, 0, 0, 0, 0, 0, 0],
   ]);
 
-  
+
 
 //   -1: 開いてない
 //    0: なにもない空白
 //  1~8: まわりの爆弾の数
 //    9: 🚩
 //   10: 爆弾
+//   11: クリックされた爆弾
   const board = [
     [0, 0, 0, 0, 0, 0, 0, 0, 0],
     [0, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -85,33 +86,26 @@ const Home = () => {
   const newBompMap = structuredClone(bombMap);
   const newClickMap = structuredClone(clickState);
 
-  let bombCounter = 2; // デフォルト１だとボムに変化する可能性があるため
+
 
   const blank = (x: number, y: number) => {
-    console.log(`ここなに！！！！：${newBompMap[x][y]}`);
+    console.log(`ここなに！！！！：${newBompMap[y][x]}`);
 
     // クリックした箇所の周辺ボム数が0すなわち newBompMap[x][y] === 2 である場合
-    if (newBompMap[x][y] === 2) {
-      // クリックセルの周りに newBompMap[x][y] === 2 がないかチェックする
+    if (newBompMap[y][x] === 2) {
+      // クリックセルの周りをクリック済みにする
       for (const dir of directions) {
-        // あったらそこをクリック済みにする
         if (
           newBompMap[x + dir[0]] !== undefined &&
           newBompMap[x + dir[0]][y + dir[1]] !== undefined &&
-          newBompMap[x + dir[0]][y + dir[1]] === 2
+          newClickMap[x + dir[0]][y + dir[1]] !== 1
         ) {
           newClickMap[x + dir[0]][y + dir[1]] = 1;
-        }
-      }
-      for (const dir of directions) {
-        // 周囲の8方向について再帰的にチェック
-        // もし新しい座標が範囲内である場合
-        if (
-          newBompMap[x + dir[0]] !== undefined &&
-          newBompMap[x + dir[0]][y + dir[1]] !== undefined &&
-          newClickMap[x + dir[0]][y + dir[1]] === 0
-        ) {
-          blank(x + dir[0], y + dir[1]); // 再帰的にチェック
+
+          // もしとなりも周辺ボム０だったら
+          if (newBompMap[x + dir[0]][y + dir[1]] === 2) {
+            blank(x + dir[0], y + dir[1]);
+          }
         }
       }
     }
@@ -119,6 +113,8 @@ const Home = () => {
 
   const clickHandler = (x: number, y: number) => {
     console.log(`クリックした座標 [x, y] => [${x}, ${y}]`);
+
+    let bombCounter = 2; // デフォルト１だとボムに変化する可能性があるため
 
     // 二次元配列を一次元化する配列
     const oneDimArray: number[] = newClickMap.flat(1);
@@ -130,7 +126,7 @@ const Home = () => {
       // ファーストクリックでタイマー開始
       setIsStarted(true);
 
-      newBompMap[x][y] = 0;
+      newBompMap[y][x] = 0;
 
       // マップ上全展開、残りのセルに爆弾を設置
       let onesPlaced = 0;
@@ -167,8 +163,8 @@ const Home = () => {
         }
 
         // クリックした場所はボムなしにする。
-        if (newBompMap[x][y] === 1) {
-          newBompMap[x][y] = 0;
+        if (newBompMap[y][x] === 1) {
+          newBompMap[y][x] = 0;
         }
 
         const newBombArray: number[] = newBompMap.flat(1);
@@ -194,12 +190,18 @@ const Home = () => {
               }
             }
             newBompMap[n][m] = bombCounter;
+            console.log(`bombCounter: ${bombCounter - 2}`);
             bombCounter = 2;
           }
         }
       }
     }
 
+  if (newBompMap[y][x] >= 2) {
+     console.log(`ここおなに！！！！：${newBompMap[y][x] - 2}`);
+  } else if (newBompMap[y][x] === 1) {
+    console.log(`ここおなに!!!!!: b`);
+  }
     // クリックしたところはクリック済みの "1" 印を設置
     newClickMap[x][y] = 1;
 
@@ -220,8 +222,13 @@ const Home = () => {
       }
     }
 
+    ////////////////ここまではあってるんよ
+
+
     blank(x, y);
 
+
+    // ポイント２
     console.log(`アメリカの${seeNewBompMap}, 計${seeNewBompMap.length}`);
 
     console.log(oneDimArray2);
