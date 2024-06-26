@@ -28,26 +28,6 @@ const Home = () => {
     [0, 0, 0, 0, 0, 0, 0, 0, 0],
   ]);
 
-
-
-//   -1: 開いてない
-//    0: なにもない空白
-//  1~8: まわりの爆弾の数
-//    9: 🚩
-//   10: 爆弾
-//   11: クリックされた爆弾
-  const board = [
-    [0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0],
-  ];
-
   const directions = [
     [0, 1],
     [1, 1],
@@ -86,11 +66,42 @@ const Home = () => {
   const newBompMap = structuredClone(bombMap);
   const newClickMap = structuredClone(clickState);
 
+  // 左右クリック識別
+  const handleCellClick = (e: React.MouseEvent<HTMLDivElement>, x: number, y: number) => {
+    e.preventDefault(); // 右クリックのデフォルト動作（コンテキストメニューの表示）を防止
 
+    switch (e.button) {
+      case 0:
+        // 左クリックの処理
+        console.log(`左クリック - 座標 [x, y] => [${x}, ${y}]`);
+        leftClickHandler(x, y);
+        break;
+      case 2:
+        // 右クリックの処理
+        console.log(`右クリック - 座標 [x, y] => [${x}, ${y}]`);
+        rightClickHandler(x, y);
+        break;
+      default:
+        break;
+    }
+  };
+
+  // 右クリック処理
+  const rightClickHandler = (x: number, y: number) => {
+    console.log(`右クリックしたセル${[x, y]}`);
+    // クリックセルが岩だったら旗を立てられる
+    if (newClickMap[x][y] === 0) {
+      newClickMap[x][y] = 2;
+    }
+    // クリックセルに旗が立っていたら
+    else if (newClickMap[x][y] === 2) {
+      newClickMap[x][y] = 0;
+    }
+
+    setClickState(newClickMap); // 修正: setClickState のみを呼び出す
+  };
 
   const blank = (x: number, y: number) => {
-    console.log(`ここなに！！！！：${newBompMap[y][x]}`);
-
     // クリックした箇所の周辺ボム数が0すなわち newBompMap[x][y] === 2 である場合
     if (newBompMap[y][x] === 2) {
       // クリックセルの周りをクリック済みにする
@@ -98,7 +109,7 @@ const Home = () => {
         if (
           newBompMap[x + dir[0]] !== undefined &&
           newBompMap[x + dir[0]][y + dir[1]] !== undefined &&
-          newClickMap[x + dir[0]][y + dir[1]] !== 1
+          newClickMap[x + dir[0]][y + dir[1]] === 0
         ) {
           newClickMap[x + dir[0]][y + dir[1]] = 1;
 
@@ -111,7 +122,7 @@ const Home = () => {
     }
   };
 
-  const clickHandler = (x: number, y: number) => {
+  const leftClickHandler = (x: number, y: number) => {
     console.log(`クリックした座標 [x, y] => [${x}, ${y}]`);
 
     let bombCounter = 2; // デフォルト１だとボムに変化する可能性があるため
@@ -197,11 +208,11 @@ const Home = () => {
       }
     }
 
-  if (newBompMap[y][x] >= 2) {
-     console.log(`ここおなに！！！！：${newBompMap[y][x] - 2}`);
-  } else if (newBompMap[y][x] === 1) {
-    console.log(`ここおなに!!!!!: b`);
-  }
+    if (newBompMap[y][x] >= 2) {
+      console.log(`ここなに！！！！：${newBompMap[y][x] - 2}`);
+    } else if (newBompMap[y][x] === 1) {
+      console.log(`ここなに!!!!!: b`);
+    }
     // クリックしたところはクリック済みの "1" 印を設置
     newClickMap[x][y] = 1;
 
@@ -222,11 +233,7 @@ const Home = () => {
       }
     }
 
-    ////////////////ここまではあってるんよ
-
-
     blank(x, y);
-
 
     // ポイント２
     console.log(`アメリカの${seeNewBompMap}, 計${seeNewBompMap.length}`);
@@ -254,7 +261,8 @@ const Home = () => {
                 <div
                   className={styles.cellstyle}
                   key={`${x}-${y}`}
-                  onClick={() => clickHandler(x, y)}
+                  onClick={(e) => handleCellClick(e, x, y)}
+                  onContextMenu={(e) => handleCellClick(e, x, y)} // 右クリック時の処理とコンテキストメニューの防止
                 >
                   {/* クリックされていない場合 */}
                   {clickValue === 0 && <div className={styles.coverstyle} />}
@@ -281,7 +289,7 @@ const Home = () => {
 
                   {/* フラグが立っている場合 */}
                   {clickValue === 2 && (
-                    <div className={styles.countStyle} style={{ backgroundPosition: `-270px 0` }} />
+                    <div className={styles.flagStyle} style={{ backgroundPosition: `-270px 0` }} />
                   )}
                 </div>
               );
