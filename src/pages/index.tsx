@@ -15,9 +15,6 @@ const Home = () => {
     [0, 0, 0, 0, 0, 0, 0, 0, 0],
   ]);
 
-  const [LeftBomb, setLeftBomb] = useState(0);
-  const [LeftCell, setLeftCell] = useState(0);
-
   const [bombMap, setBombMap] = useState([
     // 0がボムなし、1がボムあり、以降周辺のボム数2~10:0~8
     [0, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -46,6 +43,7 @@ const Home = () => {
     [-1, 1],
   ];
 
+  const [flag, setFlag] = useState(10); // 旗の残り数
   const [time, setTime] = useState(0); // タイムの状態を追加
   const [timeIsStarted, setTimeIsStarted] = useState(false); // タイマー開始判定
 
@@ -73,6 +71,13 @@ const Home = () => {
   const newBompMap = structuredClone(bombMap);
   const newClickMap = structuredClone(clickState);
 
+  // マップ内のボムの数をカウントする
+  const BombMapArray: number[] = newBompMap.flat(1);
+  const LeftBomb = BombMapArray.filter((item) => item === 1).length;
+
+  // マップ内の余ったセルをカウントする
+  const ClickMapArray: number[] = newClickMap.flat(1);
+  const LeftCell = ClickMapArray.filter((item) => item === 0 || item === 2).length;
 
   // 左右クリック識別
   const handleCellClick = (e: React.MouseEvent<HTMLDivElement>, x: number, y: number) => {
@@ -94,30 +99,29 @@ const Home = () => {
     }
   };
 
-  useEffect(() => {
-    const newBompMap = structuredClone(bombMap);
-    const newClickMap = structuredClone(clickState);
-    // マップ内のボムの数をカウントする
-    const BombMapArray: number[] = newBompMap.flat(1);
-    setLeftBomb(BombMapArray.filter((item) => item === 1).length);
-
-    // マップ内の余ったセルをカウントする
-    const ClickMapArray: number[] = newClickMap.flat(1);
-    setLeftCell(ClickMapArray.filter((item) => item === 0 || item === 2).length);
-  }, [bombMap, clickState]);
-
   // 右クリック処理
   const rightClickHandler = (x: number, y: number) => {
     console.log(`右クリックしたセル${[x, y]}`);
 
     if (face === 0) {
-      // クリックセルが岩だったら旗を立てられる
-      if (newClickMap[x][y] === 0) {
-        newClickMap[x][y] = 2;
-      }
-      // クリックセルに旗が立っていたら
-      else if (newClickMap[x][y] === 2) {
-        newClickMap[x][y] = 0;
+      if (flag === 0) {
+        // フラッグが0の場合、フラッグを取り除く処理のみを許可
+        if (newClickMap[x][y] === 2) {
+          newClickMap[x][y] = 0;
+          setFlag(flag + 1);
+          console.log(`旗残り数: ${flag + 1}`);
+        }
+      } else {
+        // フラッグが0以上の場合、フラッグの設置・取り除きを許可
+        if (newClickMap[x][y] === 0) {
+          newClickMap[x][y] = 2;
+          setFlag(flag - 1);
+          console.log(`旗残り数: ${flag - 1}`);
+        } else if (newClickMap[x][y] === 2) {
+          newClickMap[x][y] = 0;
+          setFlag(flag + 1);
+          console.log(`旗残り数: ${flag + 1}`);
+        }
       }
 
       console.log(`LeftBomb: ${LeftBomb}`);
@@ -128,10 +132,10 @@ const Home = () => {
         setFace(1);
         setTimeIsStarted(false);
       }
+      setClickState(newClickMap);
     }
-
-    setClickState(newClickMap); // 修正: setClickState のみを呼び出す
   };
+
 
   const blank = (x: number, y: number) => {
     // クリックした箇所の周辺ボム数が0すなわち newBompMap[x][y] === 2 である場合
@@ -159,6 +163,9 @@ const Home = () => {
     // タイム計測のリセット
     setTime(0);
     setTimeIsStarted(false);
+
+    // 旗残り数リセット
+    setFlag(10);
 
     // 顔文字リセット
     setFace(0);
@@ -195,7 +202,7 @@ const Home = () => {
 
         // マップ上全展開、残りのセルに爆弾を設置
         let onesPlaced = 0;
-        const totalOnes = 5; // 配置する1の数
+        const totalOnes = 10; // 配置する1の数
         const totalCells = bombMap.length * rowLength.length;
 
         // 全セルを一時的にフラットなリストとして扱う
@@ -269,7 +276,6 @@ const Home = () => {
           for (let m = 0; m < rowLength.length; m++) {
             // ボムセルをフィルタリング
             if (newBompMap[n][m] === 1) {
-              console.log('通過確認');
               newClickMap[m][n] = 1;
             }
           }
@@ -305,9 +311,15 @@ const Home = () => {
 
       blank(x, y);
 
+      console.log(`LeftBomb: ${LeftBomb}`);
+      console.log(`LeftCell: ${LeftCell}`);
 
-
-
+      // ボムと🚩の合同セルの数と、合計🚩数が一致したらクリア
+      // なんでわかんないけど多分更新が一歩遅れているから -1 しといた。
+      if (LeftBomb === LeftCell - 1) {
+        setFace(1);
+        setTimeIsStarted(false);
+      }
 
       // ポイント２
       console.log(`アメリカの${seeNewBompMap}, 計${seeNewBompMap.length}`);
@@ -316,15 +328,6 @@ const Home = () => {
       console.log(countOfValue2);
       setBombMap(newBompMap);
       setClickState(newClickMap);
-
-      console.log(`LeftBomb: ${LeftBomb}`);
-      console.log(`LeftCell: ${LeftCell}`);
-
-      // ボムと🚩の合同セルの数と、合計🚩数が一致したらクリア
-      if (LeftBomb === LeftCell) {
-        setFace(1);
-        setTimeIsStarted(false);
-      }
     }
   };
 
@@ -333,7 +336,7 @@ const Home = () => {
       <div className={styles.selectMode}>初級 中級 上級 カスタム</div>
       <div className={styles.gameContainer}>
         <div className={styles.topContainer}>
-          <div className={styles.flagCounter} />
+          <div className={styles.flagCounter}>{flag.toString().padStart(3, '0')}</div>
           {face === 0 && (
             <div
               className={styles.resetBotton}
