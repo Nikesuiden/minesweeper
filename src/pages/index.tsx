@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import styles from './index.module.css';
+import { setGlobal } from 'next/dist/trace';
 
 const Home = () => {
   const [clickState, setClickState] = useState([
@@ -27,6 +28,69 @@ const Home = () => {
     [0, 0, 0, 0, 0, 0, 0, 0, 0],
     [0, 0, 0, 0, 0, 0, 0, 0, 0],
   ]);
+
+  // 最初のゲーム設定を定義
+  let height = 9;
+  let width = 9;
+  let totalOnes = 10; // ボム数、🚩数を兼用
+
+
+  // レベル別のボードを用意
+  const levelBoard = () => {
+    const levelBomb = new Array(height);
+    const levelClick = new Array(height);
+
+    for (let y = 0; y < innerHeight; y++) {
+      levelBomb[y] = new Array(width).fill(0);
+      levelClick[y] = new Array(width).fill(0);
+    }
+    setBombMap(levelBomb);
+    setClickState(levelClick);
+  };
+
+
+   // 顔ボタンが押されたらボードをリセットする
+   const resetBotton = () => {
+    // タイム計測のリセット
+    setTime(0);
+    setTimeIsStarted(false);
+
+    // 旗残り数リセット
+    setFlag(10);
+
+    // 顔文字リセット
+    setFace(0);
+
+    for (let n = 0; n < bombMap.length; n++) {
+      for (let m = 0; m < rowLength.length; m++) {
+        newBompMap[n][m] = 0;
+        newClickMap[n][m] = 0;
+      }
+    }
+    setBombMap(newBompMap);
+    setClickState(newClickMap);
+  };
+
+  //レベル選択ボタン
+  const levelSelect = (level: string) => {
+    resetBotton();
+    if (level === 'easy') {
+      height = 9;
+      width = 9;
+      totalOnes = 10;
+    } else if (level === 'normal') {
+      height = 16;
+      width = 16;
+      totalOnes = 40;
+    } else if (level === 'hard') {
+      height = 16;
+      width = 30;
+      totalOnes = 99;
+    }
+
+    levelBoard();
+    setFlag(totalOnes);
+  }
 
   // 0: ゲーム中, 1: ゲームクリア, 2: ゲームオーバー
   // => クリック可能状態ににも兼用
@@ -140,6 +204,7 @@ const Home = () => {
   const blank = (x: number, y: number) => {
     // クリックした箇所の周辺ボム数が0すなわち newBompMap[x][y] === 2 である場合
     if (newBompMap[y][x] === 2) {
+      newClickMap[x][y] = 1;
       // クリックセルの周りをクリック済みにする
       for (const dir of directions) {
         if (
@@ -148,37 +213,13 @@ const Home = () => {
           newClickMap[x + dir[0]][y + dir[1]] === 0
         ) {
           newClickMap[x + dir[0]][y + dir[1]] = 1;
-
-          // もしとなりも周辺ボム０だったら
-          if (newBompMap[x + dir[0]][y + dir[1]] === 2) {
-            blank(x + dir[0], y + dir[1]);
-          }
+          blank(x + dir[0], y + dir[1]);
         }
       }
     }
   };
 
-  // 顔ボタンが押されたらボードをリセットする
-  const resetBotton = () => {
-    // タイム計測のリセット
-    setTime(0);
-    setTimeIsStarted(false);
 
-    // 旗残り数リセット
-    setFlag(10);
-
-    // 顔文字リセット
-    setFace(0);
-
-    for (let n = 0; n < bombMap.length; n++) {
-      for (let m = 0; m < rowLength.length; m++) {
-        newBompMap[n][m] = 0;
-        newClickMap[n][m] = 0;
-      }
-    }
-    setBombMap(newBompMap);
-    setClickState(newClickMap);
-  };
 
   const leftClickHandler = (x: number, y: number) => {
     console.log(`クリックした座標 [x, y] => [${x}, ${y}]`);
