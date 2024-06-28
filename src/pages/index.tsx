@@ -1,6 +1,5 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import styles from './index.module.css';
-import { setGlobal } from 'next/dist/trace';
 
 const Home = () => {
   const [clickState, setClickState] = useState([
@@ -29,37 +28,34 @@ const Home = () => {
     [0, 0, 0, 0, 0, 0, 0, 0, 0],
   ]);
 
-  // 最初のゲーム設定を定義
-  let height = 9;
-  let width = 9;
-  let totalOnes = 10; // ボム数、🚩数を兼用
+  // 最初のボード設定を定義
+  const[width, setWidth] = useState(9);
+  const[height, setHeight] = useState(9);
 
 
   // レベル別のボードを用意
-  const levelBoard = () => {
-    const levelBomb = new Array(height);
-    const levelClick = new Array(height);
-
-    for (let y = 0; y < innerHeight; y++) {
-      levelBomb[y] = new Array(width).fill(0);
-      levelClick[y] = new Array(width).fill(0);
-    }
+  // レベル別のボードを用意
+  const levelBoard = useCallback(() => {
+    const levelBomb = Array.from({ length: height }, () => Array(width).fill(0));
+    const levelClick = Array.from({ length: height }, () => Array(width).fill(0));
     setBombMap(levelBomb);
     setClickState(levelClick);
-  };
+  }, [height, width]);
 
-
-   // 顔ボタンが押されたらボードをリセットする
-   const resetBotton = () => {
+  // 顔ボタンが押されたらボードをリセットする
+  const resetBotton = () => {
     // タイム計測のリセット
     setTime(0);
     setTimeIsStarted(false);
 
     // 旗残り数リセット
-    setFlag(10);
+    setFlag(bombAmount);
 
     // 顔文字リセット
     setFace(0);
+
+    // ゲームオーバー状態リセット
+    setGameOver(gameOver);
 
     for (let n = 0; n < bombMap.length; n++) {
       for (let m = 0; m < rowLength.length; m++) {
@@ -75,22 +71,30 @@ const Home = () => {
   const levelSelect = (level: string) => {
     resetBotton();
     if (level === 'easy') {
-      height = 9;
-      width = 9;
-      totalOnes = 10;
-    } else if (level === 'normal') {
-      height = 16;
-      width = 16;
-      totalOnes = 40;
-    } else if (level === 'hard') {
-      height = 16;
-      width = 30;
-      totalOnes = 99;
-    }
+      setHeight(9);
+      setWidth(9);
+      setFlag(10);
+      setBombAmount(10);
 
+    } else if (level === 'normal') {
+      setHeight(16);
+      setWidth(16);
+      setFlag(40);
+      setBombAmount(40);
+
+    } else if (level === 'hard') {
+      setHeight(16);
+      setWidth(30);
+      setFlag(99);
+      setBombAmount(99);
+
+    }
+  };
+
+  useEffect(() => {
     levelBoard();
-    setFlag(totalOnes);
-  }
+  }, [height, width, levelBoard]);
+
 
   // 0: ゲーム中, 1: ゲームクリア, 2: ゲームオーバー
   // => クリック可能状態ににも兼用
@@ -107,9 +111,11 @@ const Home = () => {
     [-1, 1],
   ];
 
-  const [flag, setFlag] = useState(10); // 旗の残り数
+  const [flag, setFlag] = useState(10); // 旗の残り数 ボム数を兼用
+  const [bombAmount, setBombAmount] = useState(flag);
   const [time, setTime] = useState(0); // タイムの状態を追加
   const [timeIsStarted, setTimeIsStarted] = useState(false); // タイマー開始判定
+  const [gameOver, setGameOver] = useState(false); // ゲームオーバー判定
 
   useEffect(() => {
     let timer: NodeJS.Timeout;
@@ -200,7 +206,6 @@ const Home = () => {
     }
   };
 
-
   const blank = (x: number, y: number) => {
     // クリックした箇所の周辺ボム数が0すなわち newBompMap[x][y] === 2 である場合
     if (newBompMap[y][x] === 2) {
@@ -218,8 +223,6 @@ const Home = () => {
       }
     }
   };
-
-
 
   const leftClickHandler = (x: number, y: number) => {
     console.log(`クリックした座標 [x, y] => [${x}, ${y}]`);
@@ -243,7 +246,6 @@ const Home = () => {
 
         // マップ上全展開、残りのセルに爆弾を設置
         let onesPlaced = 0;
-        const totalOnes = 10; // 配置する1の数
         const totalCells = bombMap.length * rowLength.length;
 
         // 全セルを一時的にフラットなリストとして扱う
@@ -251,7 +253,8 @@ const Home = () => {
 
         // まず全てのセルをランダムに 0 または 1 とする
         for (let i = 0; i < totalCells; i++) {
-          if (onesPlaced < totalOnes) {
+          console.log(`設置されたボムの数${flag}`)
+          if (onesPlaced < flag) {
             flatMap.push(1);
             onesPlaced++;
           } else {
@@ -259,7 +262,8 @@ const Home = () => {
           }
         }
 
-        // マップ内の１の数が totalOnes と一致するまで繰り返す
+
+        // マップ内の１の数が flag と一致するまで繰り返す
         while (true) {
           // フラットなリストをシャッフルする
           for (let i = flatMap.length - 1; i > 0; i--) {
@@ -283,7 +287,7 @@ const Home = () => {
           const newBombArray: number[] = newBompMap.flat(1);
           const countNewOne = newBombArray.filter((item) => item === 1).length;
 
-          if (countNewOne === totalOnes) {
+          if (countNewOne === flag) {
             console.log(`ボムの数${countNewOne}`);
             break;
           }
@@ -323,6 +327,7 @@ const Home = () => {
         }
         setFace(2);
         setTimeIsStarted(false);
+        setGameOver(gameOver);
       }
 
       if (newBompMap[y][x] >= 2) {
@@ -374,7 +379,18 @@ const Home = () => {
 
   return (
     <div className={styles.container}>
-      <div className={styles.selectMode}>初級 中級 上級 カスタム</div>
+      <div className={styles.selectMode}>
+        <div className={styles.easy} onClick={() => levelSelect('easy')}>
+          初級
+        </div>
+        <div className={styles.normal} onClick={() => levelSelect('normal')}>
+          中級
+        </div>
+        <div className={styles.hard} onClick={() => levelSelect('hard')}>
+          上級
+        </div>
+        カスタム
+      </div>
       <div className={styles.gameContainer}>
         <div className={styles.topContainer}>
           <div className={styles.flagCounter}>{flag.toString().padStart(3, '0')}</div>
@@ -382,26 +398,26 @@ const Home = () => {
             <div
               className={styles.resetBotton}
               style={{ backgroundPosition: `-330px 0` }}
-              onClick={resetBotton}
+              onClick={() => resetBotton()}
             />
           )}
           {face === 1 && (
             <div
               className={styles.resetBotton}
               style={{ backgroundPosition: `-360px 0` }}
-              onClick={resetBotton}
+              onClick={() => resetBotton()}
             />
           )}
           {face === 2 && (
             <div
               className={styles.resetBotton}
               style={{ backgroundPosition: `-390px 0` }}
-              onClick={resetBotton}
+              onClick={() => resetBotton()}
             />
           )}
           <div className={styles.timeCounter}>{time.toString().padStart(3, '0')}</div>
         </div>
-        <div className={styles.boardstyle}>
+        <div className={styles.boardstyle} style={{ gridTemplateColumns: `repeat(${width}, 1fr)` }}>
           {bombMap.map((row, y) =>
             row.map((bomb, x) => {
               const clickValue = clickState[x][y]; // clickState から現在のセルの状態を取得
@@ -412,6 +428,7 @@ const Home = () => {
                   key={`${x}-${y}`}
                   onClick={(e) => handleCellClick(e, x, y)}
                   onContextMenu={(e) => handleCellClick(e, x, y)} // 右クリック時の処理とコンテキストメニューの防止
+                  style={{ background: gameOver ? 'red' : 'rgb(162 162 162)' }}
                 >
                   {/* クリックされていない場合 */}
                   {clickValue === 0 && <div className={styles.coverstyle} />}
@@ -431,8 +448,6 @@ const Home = () => {
                           style={{ backgroundPosition: `${-30 * (bomb - 3)}px 0` }}
                         />
                       )}
-                      {/* ボムがなく、周りにボムもない場合 */}
-                      {bomb === 0 && <div className={styles.emptyCell} />}
                     </>
                   )}
 
