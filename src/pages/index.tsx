@@ -37,7 +37,7 @@ const Home = () => {
   // レベル別のボードを用意
   const levelBoard = useCallback(() => {
     const levelBomb = Array.from({ length: height }, () => Array(width).fill(0));
-    const levelClick = Array.from({ length: height }, () => Array(width).fill(0));
+    const levelClick = Array.from({ length: width }, () => Array(height).fill(0));
     setBombMap(levelBomb);
     setClickState(levelClick);
   }, [height, width]);
@@ -57,12 +57,9 @@ const Home = () => {
     // ゲームオーバー状態リセット
     setGameOver(gameOver);
 
-    for (let n = 0; n < bombMap.length; n++) {
-      for (let m = 0; m < rowLength.length; m++) {
-        newBompMap[n][m] = 0;
-        newClickMap[n][m] = 0;
-      }
-    }
+    const newBompMap = bombMap.map(row => row.map(() => 0));
+    const newClickMap = clickState.map(row => row.map(() => 0));
+
     setBombMap(newBompMap);
     setClickState(newClickMap);
   };
@@ -85,10 +82,10 @@ const Home = () => {
     } else if (level === 'hard') {
       setHeight(16);
       setWidth(30);
-      setFlag(99);
-      setBombAmount(99);
-
+      setFlag(10);
+      setBombAmount(10);
     }
+    levelBoard();
   };
 
   useEffect(() => {
@@ -207,22 +204,28 @@ const Home = () => {
   };
 
   const blank = (x: number, y: number) => {
-    // クリックした箇所の周辺ボム数が0すなわち newBompMap[x][y] === 2 である場合
+    // クリックした箇所の周辺ボム数が0すなわち newBompMap[y][x] === 2 である場合
     if (newBompMap[y][x] === 2) {
       newClickMap[x][y] = 1;
       // クリックセルの周りをクリック済みにする
       for (const dir of directions) {
+        const newX = x + dir[0];
+        const newY = y + dir[1];
         if (
-          newBompMap[x + dir[0]] !== undefined &&
-          newBompMap[x + dir[0]][y + dir[1]] !== undefined &&
-          newClickMap[x + dir[0]][y + dir[1]] === 0
+          newX >= 0 && newX < width && // X座標の範囲チェック
+          newY >= 0 && newY < height && // Y座標の範囲チェック
+
+          newBompMap[newX] !== undefined &&
+          newBompMap[newX][newY] !== undefined &&
+          newClickMap[newX][newY] === 0
         ) {
-          newClickMap[x + dir[0]][y + dir[1]] = 1;
-          blank(x + dir[0], y + dir[1]);
+          newClickMap[newX][newY] = 1;
+          blank(newX, newY);
         }
       }
     }
   };
+
 
   const leftClickHandler = (x: number, y: number) => {
     console.log(`クリックした座標 [x, y] => [${x}, ${y}]`);
