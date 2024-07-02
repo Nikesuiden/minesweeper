@@ -134,6 +134,8 @@ const Home = () => {
     return () => clearInterval(timer);
   }, [timeIsStarted, time]);
 
+
+  // ボードコピーを定義
   const rowLength = bombMap[0];
   const newBompMap = structuredClone(bombMap);
   const newClickMap = structuredClone(clickState);
@@ -212,8 +214,8 @@ const Home = () => {
         const newX = x + dir[0];
         const newY = y + dir[1];
         if (
-          newX >= 0 && newX < width && // X座標の範囲チェック
-          newY >= 0 && newY < height && // Y座標の範囲チェック
+          newX >= 0 && newX < 30 && // X座標の範囲チェック
+          newY >= 0 && newY < 30 && // Y座標の範囲チェック
 
           newBompMap[newX] !== undefined &&
           newBompMap[newX][newY] !== undefined &&
