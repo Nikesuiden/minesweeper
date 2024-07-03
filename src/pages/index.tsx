@@ -38,6 +38,8 @@ const Home = () => {
   const levelBoard = useCallback(() => {
     const levelBomb = Array.from({ length: height }, () => Array(width).fill(0));
     const levelClick = Array.from({ length: width }, () => Array(height).fill(0));
+    console.log('width:',width);
+    console.log('height:',height);
     setBombMap(levelBomb);
     setClickState(levelClick);
   }, [height, width]);
@@ -76,8 +78,8 @@ const Home = () => {
     } else if (level === 'normal') {
       setHeight(16);
       setWidth(16);
-      setFlag(40);
-      setBombAmount(40);
+      setFlag(5);
+      setBombAmount(5);
 
     } else if (level === 'hard') {
       setHeight(16);
@@ -214,11 +216,11 @@ const Home = () => {
         const newX = x + dir[0];
         const newY = y + dir[1];
         if (
-          newX >= 0 && newX < 30 && // X座標の範囲チェック
-          newY >= 0 && newY < 30 && // Y座標の範囲チェック
+          newX >= 0 && newX < width && // X座標の範囲チェック
+          newY >= 0 && newY < height && // Y座標の範囲チェック
 
-          newBompMap[newX] !== undefined &&
-          newBompMap[newX][newY] !== undefined &&
+          newBompMap[newY] !== undefined &&
+          newBompMap[newY][newX] !== undefined &&
           newClickMap[newX][newY] === 0
         ) {
           newClickMap[newX][newY] = 1;
@@ -317,6 +319,13 @@ const Home = () => {
             }
           }
         }
+
+      // ボムと🚩の合同セルの数と、合計🚩数が一致したらクリア
+      // なんでわかんないけど多分更新が一歩遅れているから -1 しといた。
+      if (LeftBomb === LeftCell - 1) {
+        setFace(1);
+        setTimeIsStarted(false);
+      }
       }
 
       // もしボムをクリックしたら
@@ -396,6 +405,8 @@ const Home = () => {
         </div>
         カスタム
       </div>
+      {width}
+
       <div className={styles.gameContainer}>
         <div className={styles.topContainer}>
           <div className={styles.flagCounter}>{flag.toString().padStart(3, '0')}</div>
