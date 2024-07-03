@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useState } from 'react';
+import type { FormEvent } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import styles from './index.module.css';
 
 const Home = () => {
@@ -29,17 +30,16 @@ const Home = () => {
   ]);
 
   // 最初のボード設定を定義
-  const[width, setWidth] = useState(9);
-  const[height, setHeight] = useState(9);
-
+  const [width, setWidth] = useState(9);
+  const [height, setHeight] = useState(9);
 
   // レベル別のボードを用意
   // レベル別のボードを用意
   const levelBoard = useCallback(() => {
     const levelBomb = Array.from({ length: height }, () => Array(width).fill(0));
     const levelClick = Array.from({ length: width }, () => Array(height).fill(0));
-    console.log('width:',width);
-    console.log('height:',height);
+    console.log('width:', width);
+    console.log('height:', height);
     setBombMap(levelBomb);
     setClickState(levelClick);
   }, [height, width]);
@@ -59,11 +59,24 @@ const Home = () => {
     // ゲームオーバー状態リセット
     setGameOver(gameOver);
 
-    const newBompMap = bombMap.map(row => row.map(() => 0));
-    const newClickMap = clickState.map(row => row.map(() => 0));
+    const newBompMap = bombMap.map((row) => row.map(() => 0));
+    const newClickMap = clickState.map((row) => row.map(() => 0));
 
     setBombMap(newBompMap);
     setClickState(newClickMap);
+  };
+
+  // 入力フォームから文字を取得する試み
+  const widthRef = useRef<HTMLInputElement>(null);
+  const heightRef = useRef<HTMLInputElement>(null);
+  const bombRef = useRef<HTMLInputElement>(null);
+
+  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault(); // 送信直後のリロードを規制する
+    setWidth(widthRef.current!.value);
+    setHeight(heightRef.current!.value);
+    setFlag(bombRef.current!.value);
+    setBombAmount(bombRef.current!.value);
   };
 
   //レベル選択ボタン
@@ -74,18 +87,18 @@ const Home = () => {
       setWidth(9);
       setFlag(10);
       setBombAmount(10);
-
     } else if (level === 'normal') {
       setHeight(16);
       setWidth(16);
-      setFlag(5);
-      setBombAmount(5);
-
+      setFlag(40);
+      setBombAmount(40);
     } else if (level === 'hard') {
       setHeight(16);
       setWidth(30);
-      setFlag(10);
-      setBombAmount(10);
+      setFlag(99);
+      setBombAmount(99);
+    } else if (level === 'custom') {
+      handleSubmit();
     }
     levelBoard();
   };
@@ -93,7 +106,6 @@ const Home = () => {
   useEffect(() => {
     levelBoard();
   }, [height, width, levelBoard]);
-
 
   // 0: ゲーム中, 1: ゲームクリア, 2: ゲームオーバー
   // => クリック可能状態ににも兼用
@@ -136,15 +148,13 @@ const Home = () => {
     return () => clearInterval(timer);
   }, [timeIsStarted, time]);
 
-
   // ボードコピーを定義
   const rowLength = bombMap[0];
   const newBompMap = structuredClone(bombMap);
   const newClickMap = structuredClone(clickState);
 
   // マップ内のボムの数をカウントする
-  const BombMapArray: number[] = newBompMap.flat(1);
-  const LeftBomb = BombMapArray.filter((item) => item === 1).length;
+  const LeftBomb = bombAmount;
 
   // マップ内の余ったセルをカウントする
   const ClickMapArray: number[] = newClickMap.flat(1);
@@ -216,9 +226,10 @@ const Home = () => {
         const newX = x + dir[0];
         const newY = y + dir[1];
         if (
-          newX >= 0 && newX < width && // X座標の範囲チェック
-          newY >= 0 && newY < height && // Y座標の範囲チェック
-
+          newX >= 0 &&
+          newX < width && // X座標の範囲チェック
+          newY >= 0 &&
+          newY < height && // Y座標の範囲チェック
           newBompMap[newY] !== undefined &&
           newBompMap[newY][newX] !== undefined &&
           newClickMap[newX][newY] === 0
@@ -229,7 +240,6 @@ const Home = () => {
       }
     }
   };
-
 
   const leftClickHandler = (x: number, y: number) => {
     console.log(`クリックした座標 [x, y] => [${x}, ${y}]`);
@@ -260,7 +270,7 @@ const Home = () => {
 
         // まず全てのセルをランダムに 0 または 1 とする
         for (let i = 0; i < totalCells; i++) {
-          console.log(`設置されたボムの数${flag}`)
+          console.log(`設置されたボムの数${flag}`);
           if (onesPlaced < flag) {
             flatMap.push(1);
             onesPlaced++;
@@ -268,7 +278,6 @@ const Home = () => {
             flatMap.push(0);
           }
         }
-
 
         // マップ内の１の数が flag と一致するまで繰り返す
         while (true) {
@@ -320,12 +329,16 @@ const Home = () => {
           }
         }
 
-      // ボムと🚩の合同セルの数と、合計🚩数が一致したらクリア
-      // なんでわかんないけど多分更新が一歩遅れているから -1 しといた。
-      if (LeftBomb === LeftCell - 1) {
-        setFace(1);
-        setTimeIsStarted(false);
-      }
+        // マップ内の余ったセルをカウントする
+        const ClickMapArray: number[] = newClickMap.flat(1);
+        const LeftCell = ClickMapArray.filter((item) => item === 0 || item === 2).length;
+
+        // ボムと🚩の合同セルの数と、合計🚩数が一致したらクリア
+        // なんでわかんないけど多分更新が一歩遅れているから -1 しといた。
+        if (LeftBomb === LeftCell - 1) {
+          setFace(1);
+          setTimeIsStarted(false);
+        }
       }
 
       // もしボムをクリックしたら
@@ -371,12 +384,16 @@ const Home = () => {
 
       blank(x, y);
 
+      // マップ内の余ったセルをカウントする
+      const ClickMapArray: number[] = newClickMap.flat(1);
+      const LeftCell = ClickMapArray.filter((item) => item === 0 || item === 2).length;
+
       console.log(`LeftBomb: ${LeftBomb}`);
       console.log(`LeftCell: ${LeftCell}`);
 
       // ボムと🚩の合同セルの数と、合計🚩数が一致したらクリア
       // なんでわかんないけど多分更新が一歩遅れているから -1 しといた。
-      if (LeftBomb === LeftCell - 1) {
+      if (LeftBomb === LeftCell) {
         setFace(1);
         setTimeIsStarted(false);
       }
@@ -403,9 +420,27 @@ const Home = () => {
         <div className={styles.hard} onClick={() => levelSelect('hard')}>
           上級
         </div>
-        カスタム
+        <div className={styles.custom} onClick={() => levelSelect('custom')}>
+          カスタム
+        </div>
       </div>
-      {width}
+      <form onSubmit={handleSubmit} className={styles.customForm}>
+        <div>
+          <label>横幅</label>
+          <input type="text" ref={widthRef} />
+        </div>
+        <div>
+          <label>高さ</label>
+          <input type="text" ref={heightRef}/>
+        </div>
+        <div>
+          <label>ボム</label>
+          <input type="text" ref={bombRef}/>
+        </div>
+        <div>
+          <button type="submit">送信</button>
+        </div>
+      </form>
 
       <div className={styles.gameContainer}>
         <div className={styles.topContainer}>
