@@ -30,8 +30,8 @@ const Home = () => {
   ]);
 
   // 最初のボード設定を定義
-  const [width, setWidth] = useState(9);
-  const [height, setHeight] = useState(9);
+  const [width, setWidth] = useState<number>(9);
+  const [height, setHeight] = useState<number>(9);
 
   // レベル別のボードを用意
   // レベル別のボードを用意
@@ -66,17 +66,22 @@ const Home = () => {
     setClickState(newClickMap);
   };
 
-  // 入力フォームから文字を取得する試み
-  const widthRef = useRef<HTMLInputElement>(null);
-  const heightRef = useRef<HTMLInputElement>(null);
-  const bombRef = useRef<HTMLInputElement>(null);
+  // ページロード時とリサイズ時に幅をチェックする関数
+
+
+
 
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault(); // 送信直後のリロードを規制する
-    setWidth(widthRef.current!.value);
-    setHeight(heightRef.current!.value);
-    setFlag(bombRef.current!.value);
-    setBombAmount(bombRef.current!.value);
+    
+    const widthCustom = parseInt((e.currentTarget.elements.namedItem('width') as HTMLInputElement).value, 10);
+    const heightCustom = parseInt((e.currentTarget.elements.namedItem('height') as HTMLInputElement).value, 10);
+    const bombCustom = parseInt((e.currentTarget.elements.namedItem('bomb') as HTMLInputElement).value, 10);
+
+    setWidth(widthCustom);
+    setHeight(heightCustom);
+    setFlag(bombCustom);
+    setBombAmount(bombCustom);
   };
 
   //レベル選択ボタン
@@ -98,7 +103,7 @@ const Home = () => {
       setFlag(99);
       setBombAmount(99);
     } else if (level === 'custom') {
-      handleSubmit();
+      handleSubmit;
     }
     levelBoard();
   };
@@ -122,8 +127,8 @@ const Home = () => {
     [-1, 1],
   ];
 
-  const [flag, setFlag] = useState(10); // 旗の残り数 ボム数を兼用
-  const [bombAmount, setBombAmount] = useState(flag);
+  const [flag, setFlag] = useState<number>(10); // 旗の残り数 ボム数を兼用
+  const [bombAmount, setBombAmount] = useState<number>(flag);
   const [time, setTime] = useState(0); // タイムの状態を追加
   const [timeIsStarted, setTimeIsStarted] = useState(false); // タイマー開始判定
   const [gameOver, setGameOver] = useState(false); // ゲームオーバー判定
@@ -399,7 +404,7 @@ const Home = () => {
       }
 
       // ポイント２
-      console.log(`アメリカの${seeNewBompMap}, 計${seeNewBompMap.length}`);
+      console.log(`アレイ${seeNewBompMap}, 計${seeNewBompMap.length}`);
 
       console.log(oneDimArray2);
       console.log(countOfValue2);
@@ -427,15 +432,15 @@ const Home = () => {
       <form onSubmit={handleSubmit} className={styles.customForm}>
         <div>
           <label>横幅</label>
-          <input type="text" ref={widthRef} />
+          <input type="text"  name='width' />
         </div>
         <div>
           <label>高さ</label>
-          <input type="text" ref={heightRef}/>
+          <input type="text" name='height'/>
         </div>
         <div>
           <label>ボム</label>
-          <input type="text" ref={bombRef}/>
+          <input type="text" name='bomb'/>
         </div>
         <div>
           <button type="submit">送信</button>
